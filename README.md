@@ -1,66 +1,329 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Ecommerce API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+REST API sederhana untuk mengelola katalog produk ecommerce. Project ini menggunakan Laravel 11 dan menyediakan endpoint CRUD `products` dengan validasi request, API Resource, pagination, unique product identifiers, enum status, soft delete, dan feature tests.
 
-## About Laravel
+## Technology Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Area | Technology |
+| --- | --- |
+| Backend | PHP 8.2+, Laravel 11 |
+| Database | Laravel migrations, SQLite default in `.env.example`, MySQL supported via `.env` |
+| API | Laravel API routes, FormRequest validation, JsonResource responses |
+| Testing | PHPUnit 11, Laravel Feature Tests |
+| Code Style | Laravel Pint |
+| Frontend Tooling | Vite, Tailwind CSS dependencies available |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Product CRUD API at `/api/products`.
+- Paginated product listing with `data`, `links`, and `meta` response sections.
+- Product fields include `sku`, `name`, `slug`, `description`, `price`, `stock`, and `status`.
+- Product status enum values: `draft`, `active`, `archived`.
+- Unique `sku` and `slug` constraints.
+- Automatic slug generation from `name` during create when `slug` is not provided.
+- Soft delete for products.
+- Request validation separated into `StoreProductRequest` and `UpdateProductRequest`.
+- API response transformation through `ProductResource`.
+- Feature tests for listing, pagination cap, create, show, update, patch, delete, validation, and unique identifiers.
 
-## Learning Laravel
+## Project Architecture
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+The product API follows standard Laravel layering:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+```text
+HTTP Request
+  -> routes/api.php
+  -> ProductController
+  -> StoreProductRequest / UpdateProductRequest
+  -> Product model
+  -> products table
+  -> ProductResource
+  -> JSON response
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Important files:
 
-## Laravel Sponsors
+| Path | Purpose |
+| --- | --- |
+| `routes/api.php` | API route registration for `products` |
+| `app/Http/Controllers/ProductController.php` | Product CRUD controller |
+| `app/Http/Requests/StoreProductRequest.php` | Validation for create product |
+| `app/Http/Requests/UpdateProductRequest.php` | Validation for update product |
+| `app/Http/Resources/ProductResource.php` | Product API response shape |
+| `app/Models/Product.php` | Product Eloquent model, casts, fillable fields, soft delete |
+| `app/Enums/ProductStatus.php` | Product status enum |
+| `database/migrations/*products*.php` | Product table schema and hardening migrations |
+| `database/factories/ProductFactory.php` | Product factory for tests |
+| `tests/Feature/ProductApiTest.php` | Product API feature tests |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Getting Started
 
-### Premium Partners
+### Prerequisites
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- PHP 8.2 or newer
+- Composer
+- Node.js and npm, only needed for Vite/frontend assets
+- SQLite or MySQL
 
-## Contributing
+### Install Dependencies
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer install
+npm install
+```
 
-## Code of Conduct
+### Environment Setup
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-## Security Vulnerabilities
+For SQLite, keep the default database settings from `.env.example` and create the database file if needed:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```powershell
+New-Item -ItemType File -Path database/database.sqlite
+```
+
+For MySQL, update these values in `.env`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_ecommerce
+DB_USERNAME=db_ecommerce
+DB_PASSWORD=your_password
+```
+
+### Run Migrations
+
+```bash
+php artisan migrate
+```
+
+### Start Development Server
+
+```bash
+php artisan serve
+```
+
+The API will be available at:
+
+```text
+http://127.0.0.1:8000/api/products
+```
+
+## API Reference
+
+### Product Object
+
+```json
+{
+  "id": 1,
+  "sku": "KB-RGB-001",
+  "name": "Gaming Keyboard",
+  "slug": "gaming-keyboard",
+  "description": "Mechanical keyboard with RGB lighting.",
+  "price": "1250000.00",
+  "stock": 15,
+  "status": "active",
+  "created_at": "2026-05-14T10:00:00+00:00",
+  "updated_at": "2026-05-14T10:00:00+00:00"
+}
+```
+
+`price` is returned as a decimal string because Laravel's `decimal:2` cast preserves money precision.
+
+### Endpoints
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `GET` | `/api/products` | List products with pagination |
+| `POST` | `/api/products` | Create a product |
+| `GET` | `/api/products/{product}` | Show a product |
+| `PUT` | `/api/products/{product}` | Update product fields |
+| `PATCH` | `/api/products/{product}` | Partially update product fields |
+| `DELETE` | `/api/products/{product}` | Soft delete a product |
+
+### List Products
+
+```http
+GET /api/products?per_page=15
+Accept: application/json
+```
+
+Response type: paginated collection response.
+
+```json
+{
+  "data": [],
+  "links": {
+    "first": "http://127.0.0.1:8000/api/products?page=1",
+    "last": "http://127.0.0.1:8000/api/products?page=1",
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "from": null,
+    "last_page": 1,
+    "per_page": 15,
+    "to": null,
+    "total": 0
+  }
+}
+```
+
+Pagination notes:
+
+- Default `per_page` is `15`.
+- Maximum `per_page` is capped at `100`.
+
+### Create Product
+
+```http
+POST /api/products
+Accept: application/json
+Content-Type: application/json
+```
+
+```json
+{
+  "sku": "KB-RGB-001",
+  "name": "Gaming Keyboard",
+  "description": "Mechanical keyboard with RGB lighting.",
+  "price": 1250000,
+  "stock": 15,
+  "status": "active"
+}
+```
+
+Response status: `201 Created`.
+
+If `slug` is omitted, it is generated from `name`. For example, `Gaming Keyboard` becomes `gaming-keyboard`.
+
+### Update Product
+
+```http
+PATCH /api/products/1
+Accept: application/json
+Content-Type: application/json
+```
+
+```json
+{
+  "stock": 25
+}
+```
+
+Response status: `200 OK`.
+
+### Delete Product
+
+```http
+DELETE /api/products/1
+Accept: application/json
+```
+
+Response status: `204 No Content`.
+
+Products are soft deleted, so the row remains in the database with `deleted_at` set.
+
+### Validation Errors
+
+Invalid requests return `422 Unprocessable Entity`:
+
+```json
+{
+  "message": "The sku field is required. (and 3 more errors)",
+  "errors": {
+    "sku": ["The sku field is required."],
+    "name": ["The name field is required."],
+    "price": ["The price field must be at least 0."],
+    "stock": ["The stock field must be at least 0."]
+  }
+}
+```
+
+## Product Validation Rules
+
+| Field | Create | Update | Notes |
+| --- | --- | --- | --- |
+| `sku` | Required | Optional | Unique, max 100 characters |
+| `name` | Required | Optional | Max 255 characters |
+| `slug` | Auto-generated or provided | Optional | Unique, lowercase URL format |
+| `description` | Optional | Optional | Nullable string |
+| `price` | Required | Optional | Numeric, min 0, max `9999999999.99` |
+| `stock` | Required | Optional | Integer, min 0 |
+| `status` | Optional | Optional | Must be `draft`, `active`, or `archived` |
+
+## Development Workflow
+
+Useful commands:
+
+```bash
+php artisan route:list --path=api
+php artisan migrate:status
+php artisan test
+vendor\bin\pint --test
+```
+
+Run Pint to format PHP files:
+
+```bash
+vendor\bin\pint
+```
+
+Run the Laravel development stack defined in Composer:
+
+```bash
+composer run dev
+```
+
+## Testing
+
+The product API is covered by Laravel feature tests in `tests/Feature/ProductApiTest.php`.
+
+Current coverage areas:
+
+- Product listing response.
+- Pagination size cap.
+- Product creation with generated slug.
+- Product show endpoint.
+- Full and partial product updates.
+- Soft delete behavior.
+- Required field validation.
+- Unique `sku` and `slug` validation.
+
+Run tests:
+
+```bash
+php artisan test
+```
+
+## Coding Standards
+
+- Use `declare(strict_types=1);` in PHP source files.
+- Keep validation in FormRequest classes.
+- Return API responses through JsonResource classes.
+- Use Eloquent casts for domain values like money, integer stock, and enum status.
+- Keep controllers focused on request orchestration.
+- Run `vendor\bin\pint --test` before submitting changes.
+
+## API Client Testing
+
+You can test the API with Hoppscotch, Postman, Insomnia, cURL, or any HTTP client.
+
+Example cURL request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/products \
+  -H "Accept: application/json" \
+  -H "Content-Type: application/json" \
+  -d "{\"sku\":\"KB-RGB-001\",\"name\":\"Gaming Keyboard\",\"price\":1250000,\"stock\":15}"
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is based on the Laravel application skeleton, which is open-sourced under the MIT license.

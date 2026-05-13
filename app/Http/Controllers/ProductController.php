@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
@@ -13,16 +15,18 @@ use Illuminate\Http\Response;
 
 final class ProductController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        $perPage = min(max($request->integer('per_page', 15), 1), 100);
+
         return ProductResource::collection(
-            Product::query()->latest('id')->get()
+            Product::query()->latest('id')->paginate($perPage)
         );
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreProductRequest $request): JsonResponse
     {
-        $product = Product::query()->create($this->validatedData($request));
+        $product = Product::query()->create($request->validated());
 
         return (new ProductResource($product))
             ->response()
@@ -34,9 +38,9 @@ final class ProductController extends Controller
         return new ProductResource($product);
     }
 
-    public function update(Request $request, Product $product): ProductResource
+    public function update(UpdateProductRequest $request, Product $product): ProductResource
     {
-        $product->update($this->validatedData($request, updating: true));
+        $product->update($request->validated());
 
         return new ProductResource($product->refresh());
     }
@@ -46,20 +50,5 @@ final class ProductController extends Controller
         $product->delete();
 
         return response()->noContent();
-    }
-
-    /**
-     * @return array{name?: string, description?: string|null, price?: numeric, stock?: int}
-     */
-    private function validatedData(Request $request, bool $updating = false): array
-    {
-        $required = $updating ? 'sometimes' : 'required';
-
-        return $request->validate([
-            'name' => [$required, 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'price' => [$required, 'numeric', 'min:0', 'max:9999999999.99'],
-            'stock' => [$required, 'integer', 'min:0'],
-        ]);
     }
 }
