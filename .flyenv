@@ -1,0 +1,2 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PATH = "C:\Users\aessaputra\AppData\Local\Programs\FlyEnv-Data\app\nodejs\v22.22.2;" + $env:PATH #FlyEnv-ID-MtP4Eh4vqknTlUr847TeXaItYcFJNT7n
